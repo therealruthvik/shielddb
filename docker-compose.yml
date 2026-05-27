@@ -37,7 +37,7 @@ services:
     # Exposes Nginx API Gateway on port 80 (standard HTTP).
     # Visitors go to http://localhost and Nginx proxies /api to backend internally!
     ports:
-      - "80:80"
+      - "8080:80"
     depends_on:
       - backend
     networks:
