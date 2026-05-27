@@ -523,10 +523,11 @@ export default function App() {
               {/* Threshold Config */}
               <div style={{ marginTop: 12 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: 6 }}>
-                  <span style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>DuoGuard Shield Sensitivity</span>
+                  <label htmlFor="threshold-slider" style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>DuoGuard Shield Sensitivity</label>
                   <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--color-purple)', fontWeight: 600 }}>Threshold: {threshold}</span>
                 </div>
                 <input 
+                  id="threshold-slider"
                   type="range" 
                   min="0.05" 
                   max="0.95" 
@@ -540,8 +541,9 @@ export default function App() {
               {/* Selector configurations */}
               <div className="grid-2" style={{ marginTop: 10 }}>
                 <div>
-                  <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Operation Type</label>
+                  <label htmlFor="operation-select" style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Operation Type</label>
                   <select 
+                    id="operation-select"
                     className="input-field" 
                     value={operationType} 
                     onChange={(e) => setOperationType(e.target.value as any)}
@@ -553,8 +555,9 @@ export default function App() {
                 </div>
 
                 <div>
-                  <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Collection</label>
+                  <label htmlFor="collection-select" style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Collection</label>
                   <select 
+                    id="collection-select"
                     className="input-field" 
                     value={selectedCollection} 
                     onChange={(e) => setSelectedCollection(e.target.value)}
@@ -568,7 +571,7 @@ export default function App() {
 
               {/* Dynamic input textareas */}
               <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: 6, minHeight: '140px' }}>
-                <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                <label htmlFor="payload-input" style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
                   {operationType === 'query' && "MongoDB Filter JSON (audited string)"}
                   {operationType === 'insert' && "Document JSON payload to Write"}
                   {operationType === 'delete' && "MongoDB Delete Filter JSON"}
@@ -576,6 +579,7 @@ export default function App() {
                 
                 {operationType === 'insert' ? (
                   <textarea
+                    id="payload-input"
                     className="input-field"
                     style={{ flexGrow: 1, fontFamily: 'var(--font-mono)', fontSize: '0.85rem', resize: 'none' }}
                     value={payloadInput}
@@ -583,6 +587,7 @@ export default function App() {
                   />
                 ) : (
                   <textarea
+                    id="payload-input"
                     className="input-field"
                     style={{ flexGrow: 1, fontFamily: 'var(--font-mono)', fontSize: '0.85rem', resize: 'none' }}
                     value={queryInput}
