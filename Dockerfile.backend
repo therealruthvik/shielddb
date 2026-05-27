@@ -1,0 +1,24 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install basic compile dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy configuration and code
+COPY pyproject.toml README.md /app/
+COPY duogaurd_mcp /app/duogaurd_mcp
+
+# Install python dependencies from pyproject.toml
+RUN pip install --no-cache-dir .
+
+# Pre-download and cache the DuoGuard-0.5B model in the Docker image 
+# so that the container starts up instantly on boot!
+RUN python -m duogaurd_mcp.main download
+
+EXPOSE 8000
+
+# Start the dashboard REST API backend by default
+CMD ["python", "-m", "duogaurd_mcp.main", "dashboard"]

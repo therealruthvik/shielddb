@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  # Service 1: Real Local MongoDB Database Container
+  database:
+    image: mongo:latest
+    container_name: shielddb-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - shield-network
+
+  # Service 2: ShieldDB Python Backend (MCP / FastAPI REST)
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: shielddb-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - MONGODB_URI=mongodb://database:27017/shield_db
+    depends_on:
+      - database
+    networks:
+      - shield-network
+
+  # Service 3: ShieldDB React Web Dashboard client
+  frontend:
+    build:
+      context: ./dashboard
+      dockerfile: Dockerfile.frontend
+    container_name: shielddb-frontend
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    networks:
+      - shield-network
+
+networks:
+  shield-network:
+    driver: bridge
+
+volumes:
+  mongo-data:
