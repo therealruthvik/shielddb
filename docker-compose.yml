@@ -1,23 +1,24 @@
 version: '3.8'
 
 services:
-  # Service 1: Real Local MongoDB Database Container
+  # Microservice 1: MongoDB Database (Isolated internally)
   database:
     image: mongo:latest
     container_name: shielddb-mongo
-    ports:
-      - "27017:27017"
+    # Secure Design: No ports exposed to the host machine.
+    # The database is only accessible inside the isolated bridge network by the backend.
     volumes:
       - mongo-data:/data/db
     networks:
       - shield-network
 
-  # Service 2: ShieldDB Python Backend (MCP / FastAPI REST)
+  # Microservice 2: ShieldDB Python Backend Security Gateway
   backend:
     build:
       context: .
       dockerfile: Dockerfile.backend
     container_name: shielddb-backend
+    # Exposed internally, and port 8000 mapped for local direct MCP sessions if needed
     ports:
       - "8000:8000"
     environment:
@@ -27,14 +28,16 @@ services:
     networks:
       - shield-network
 
-  # Service 3: ShieldDB React Web Dashboard client
+  # Microservice 3: Nginx API Gateway & React Web Dashboard (Single Entry Point)
   frontend:
     build:
       context: ./dashboard
       dockerfile: Dockerfile.frontend
     container_name: shielddb-frontend
+    # Exposes Nginx API Gateway on port 80 (standard HTTP).
+    # Visitors go to http://localhost and Nginx proxies /api to backend internally!
     ports:
-      - "5173:5173"
+      - "80:80"
     depends_on:
       - backend
     networks:

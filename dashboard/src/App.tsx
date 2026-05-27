@@ -14,7 +14,7 @@ import {
   Sparkles
 } from 'lucide-react';
 
-const API_BASE = "http://localhost:8000";
+const API_BASE = "";
 
 const CATEGORY_METADATA: Record<string, { description: string, threat_level: string, action: string }> = {
   "Violent crimes": {
