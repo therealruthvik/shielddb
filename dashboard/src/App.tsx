@@ -703,7 +703,9 @@ export default function App() {
                     <span style={{ fontSize: '0.9rem', color: 'var(--color-purple)', fontWeight: 700, fontFamily: 'var(--font-mono)' }}>{activeLatency}ms</span>
                   )}
                 </div>
-                     {/* Live Shield Terminal */}
+              </div>
+
+              {/* Live Shield Terminal */}
               <div style={{ marginTop: 14, flexGrow: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
                 <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Live Security logs & Agent Auditing stream:</span>
                 <div className="console-terminal" style={{ height: '450px', border: '1px solid rgba(147, 51, 234, 0.1)' }}>
@@ -726,7 +728,7 @@ export default function App() {
                   })}
                   <div ref={terminalEndRef} />
                 </div>
-              </div>         </div>
+              </div>
             </div>
           </section>
         )}
