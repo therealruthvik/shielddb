@@ -706,7 +706,7 @@ export default function App() {
                      {/* Live Shield Terminal */}
               <div style={{ marginTop: 14, flexGrow: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
                 <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Live Security logs & Agent Auditing stream:</span>
-                <div className="console-terminal" style={{ height: '360px', border: '1px solid rgba(147, 51, 234, 0.1)' }}>
+                <div className="console-terminal" style={{ height: '450px', border: '1px solid rgba(147, 51, 234, 0.1)' }}>
                   {terminalOutput.map((log, idx) => {
                     const colonIndex = log.indexOf(':');
                     const color = log.substring(0, colonIndex);

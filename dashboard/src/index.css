@@ -455,7 +455,7 @@ body {
   display: grid;
   grid-template-columns: 1.2fr 1fr;
   gap: 24px;
-  height: 600px;
+  height: 700px;
 }
 
 .console-editor {
