@@ -213,10 +213,32 @@ def api_delete(payload: DeleteRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+def get_categories_metadata():
+    """Retrieves categories metadata from DB rules collection, falling back to static metadata if empty or failed."""
+    try:
+        rules_col = db_conn.get_collection("rules")
+        if rules_col is not None:
+            rules = list(rules_col.find({}, {"_id": 0}))
+            if rules and len(rules) > 0:
+                dynamic_metadata = {}
+                for r in rules:
+                    cat = r.get("category")
+                    if cat:
+                        dynamic_metadata[cat] = {
+                            "description": r.get("description", ""),
+                            "threat_level": r.get("threat_level", ""),
+                            "action": r.get("playbook", r.get("action", ""))
+                        }
+                return dynamic_metadata
+    except Exception as e:
+        import logging
+        logging.getLogger("ShieldDB").warning(f"Error fetching rules from DB: {e}. Using hardcoded fallback.")
+    return CATEGORY_METADATA
+
 @app.get("/api/categories")
 def api_categories():
     """Returns definitions, threat profiles, and mitigation playbooks for the 12 safety categories."""
-    return CATEGORY_METADATA
+    return get_categories_metadata()
 
 @app.get("/api/stats")
 def api_get_stats():
@@ -231,7 +253,8 @@ def api_get_stats():
         
         # Category distribution from moderator stats
         # Create a sample breakdown to show if nothing has been recorded yet
-        cat_triggers = {cat: 0 for cat in CATEGORY_METADATA.keys()}
+        current_metadata = get_categories_metadata()
+        cat_triggers = {cat: 0 for cat in current_metadata.keys()}
         for violation in security_violations:
             for cat in violation.get("categories", []):
                 if cat in cat_triggers:

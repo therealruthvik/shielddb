@@ -136,6 +136,25 @@ export default function App() {
   const [stats, setStats] = useState<StatsData | null>(null);
   const [isPolling, setIsPolling] = useState<boolean>(true);
   const [copiedSection, setCopiedSection] = useState<string>('');
+  const [categoriesMetadata, setCategoriesMetadata] = useState<Record<string, { description: string, threat_level: string, action: string }>>(CATEGORY_METADATA);
+
+  // Load dynamic rules and playbooks from ShieldDB MongoDB on mount
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/api/categories`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data && Object.keys(data).length > 0) {
+            setCategoriesMetadata(data);
+          }
+        }
+      } catch (e) {
+        console.warn("Failed to fetch API categories. Using static fallback.", e);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   const terminalEndRef = useRef<HTMLDivElement>(null);
 
@@ -651,7 +670,7 @@ export default function App() {
               <div style={{ marginTop: 10, flexGrow: 1 }}>
                 <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 8 }}>DuoGuard Risk Profile Analysis:</span>
                 <div className="gauge-container" style={{ maxHeight: '170px', overflowY: 'auto', paddingRight: 6 }}>
-                  {Object.keys(CATEGORY_METADATA).map(catName => {
+                  {Object.keys(categoriesMetadata).map(catName => {
                     const prob = moderationProbs[catName] || 0.01;
                     const percent = Math.round(prob * 100);
                     let barClass = "safe";
@@ -778,7 +797,7 @@ export default function App() {
                 ShieldDB Active Rules & Playbook Guide
               </h3>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
-                {Object.entries(CATEGORY_METADATA).map(([catName, meta]: [string, any]) => (
+                {Object.entries(categoriesMetadata).map(([catName, meta]: [string, any]) => (
                   <div key={catName} style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-muted)', borderRadius: 10, padding: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span style={{ fontWeight: 700, fontSize: '0.9rem' }}>{catName}</span>
