@@ -415,7 +415,7 @@ def api_chat(payload: ChatRequest):
                 tool.parameters = clean_mcp_schema(tool.parameters)
         
         response = client.models.generate_content(
-            model='gemini-2.5-flash',
+            model='gemini-3.5-flash',
             contents=[chat_context, f"User request: {payload.message}"],
             config=types.GenerateContentConfig(
                 tools=[types.Tool(function_declarations=gemini_tools)],
@@ -433,7 +433,7 @@ def api_chat(payload: ChatRequest):
             
             # Complete the thought
             final_response = client.models.generate_content(
-                model='gemini-2.5-flash',
+                model='gemini-3.5-flash',
                 contents=[
                     chat_context,
                     f"User request: {payload.message}",

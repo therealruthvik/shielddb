@@ -1,14 +1,14 @@
 # ShieldDB 🛡️
 ### The Secured Google Gemini Database Workstation & MCP Gateway
 
-**ShieldDB** is an enterprise-grade Model Context Protocol (MCP) gateway, security sidecar, and interactive workstation that enables **Google Gemini** to securely administer databases. Powered by **gemini-2.5-flash**, the workstation translates plain English instructions into complex database operations. To ensure enterprise compliance and prevent malicious exploits, all Gemini database interactions are intercepted and audited by **DuoGuard-0.5B**—a state-of-the-art multilingual safety classifier that blocks inbound prompt injections and automatically redacts outbound customer PII.
+**ShieldDB** is an enterprise-grade Model Context Protocol (MCP) gateway, security sidecar, and interactive workstation that enables **Google Gemini** to securely administer databases. Powered by **gemini-3.5-flash**, the workstation translates plain English instructions into complex database operations. To ensure enterprise compliance and prevent malicious exploits, all Gemini database interactions are intercepted and audited by **DuoGuard-0.5B**—a state-of-the-art multilingual safety classifier that blocks inbound prompt injections and automatically redacts outbound customer PII.
 
 ---
 
 ## 🌟 Key Features
 
 1. **Autonomous Gemini Database Workstation 🤖**
-   - Employs **Google Gemini (`gemini-2.5-flash`)** as the primary cognitive engine.
+   - Employs **Google Gemini (`gemini-3.5-flash`)** as the primary cognitive engine.
    - Translates complex natural language prompts (e.g., *"Give me a summary of active users in NY and update their status to active"*) into safe, structured database commands via Model Context Protocol (MCP) tool bindings.
 
 2. **Inbound Guardrails (Safety Shielding) 🛡️**
@@ -33,7 +33,7 @@
 ## 🛠️ Architecture
 
 ```
-User Prompt ──> [Google Gemini (gemini-2.5-flash)]
+User Prompt ──> [Google Gemini (gemini-3.5-flash)]
                              │
                              ▼  (Secure MCP Tool Call)
                    [ShieldDB MCP Gateway]
