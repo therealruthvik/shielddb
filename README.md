@@ -1,47 +1,62 @@
 # ShieldDB 🛡️
-### The Guarded Autonomous Database Administrator
+### The Secured Google Gemini Database Workstation & MCP Gateway
 
-**ShieldDB** is an enterprise-grade Model Context Protocol (MCP) gateway and security dashboard that secures AI agent interactions with databases. Powered by **DuoGuard-0.5B**, a state-of-the-art multilingual safety classifier, ShieldDB intercepts inbound natural language queries to prevent jailbreaks/attacks and scrubs outbound retrieved documents to automatically redact customer PII.
+**ShieldDB** is an enterprise-grade Model Context Protocol (MCP) gateway, security sidecar, and interactive workstation that enables **Google Gemini** to securely administer databases. Powered by **gemini-2.5-flash**, the workstation translates plain English instructions into complex database operations. To ensure enterprise compliance and prevent malicious exploits, all Gemini database interactions are intercepted and audited by **DuoGuard-0.5B**—a state-of-the-art multilingual safety classifier that blocks inbound prompt injections and automatically redacts outbound customer PII.
 
 ---
 
 ## 🌟 Key Features
 
-1. **Inbound Guardrails (Safety Shielding)**
-   - Protects database collections against prompt injections, bypass rules, and malicious command injections disguised as natural language.
-   - Detects risks across **12 distinct safety categories** (Violent crimes, Child exploitation, Suicide, Hate speech, Jailbreaks, etc.).
+1. **Autonomous Gemini Database Workstation 🤖**
+   - Employs **Google Gemini (`gemini-2.5-flash`)** as the primary cognitive engine.
+   - Translates complex natural language prompts (e.g., *"Give me a summary of active users in NY and update their status to active"*) into safe, structured database commands via Model Context Protocol (MCP) tool bindings.
 
-2. **Outbound Guardrails (PII & Privacy Scrubbing)**
-   - Automatically sanitizes retrieved query results *before* sending them to the AI agent or displaying them.
+2. **Inbound Guardrails (Safety Shielding) 🛡️**
+   - Intercepts Gemini's incoming instructions to protect database collections against prompt injections, bypass attempts, and destructive command injections.
+   - Detects risks across **12 distinct safety categories** (Jailbreak prompts, Non-violent crimes, Violent crimes, Suicide, etc.) in milliseconds.
+
+3. **Outbound Guardrails (PII & Privacy Redaction) 🔒**
+   - Automatically sanitizes retrieved query results *before* sending them to Gemini or rendering them in the chat workspace.
    - Intelligently redacts Emails, Credit Cards, Social Security Numbers, Phone Numbers, Passwords, and API Keys.
-   - Helps meet corporate compliance frameworks like **GDPR, HIPAA, and PCI-DSS**.
+   - Enables full compliance with strict privacy standards like **GDPR, HIPAA, and PCI-DSS**.
 
-3. **Smart Hybrid Database Engine**
-   - Automatically detects live MongoDB Atlas credentials in a `.env` file.
+4. **Smart Hybrid Database Engine ⚙️**
+   - Automatically detects live MongoDB Atlas credentials in the environment.
    - Falls back to an **In-Memory Sandbox (MongoMock)** if offline, pre-seeding it with rich customer records so judges can run and evaluate the system instantly.
 
-4. **Premium Security Dashboard**
-   - A modern React dashboard with neon glows and glassmorphic panels.
-   - Includes a **Live Security Console & Playground** to test benign vs. malicious prompts and visualize DuoGuard risk profiles and query redactors in real-time.
+5. **Premium Security & Chat Dashboard 💎**
+   - Includes the **Gemini Secure Brain** workspace—a clean, real-time interactive chat dashboard to instruct Gemini in plain English.
+   - Features a **Live Security Console & Playground** to test benign vs. malicious prompts and visualize DuoGuard risk profiles and query redactors in real-time.
 
 ---
 
 ## 🛠️ Architecture
 
 ```
-User Prompt ──> [AI Agent]
-                  │
-                  ▼  (secure_query tool call)
-            [ShieldDB MCP Gateway]
-                  │
-                  ├── Inbound Screening (DuoGuard Model) ──> [Jailbreak? Blocked!]
-                  │
-                  ├── Database Adapter ──> [MongoDB / MongoMock]
-                  │
-                  └── Outbound Redaction ──> [Scrub Emails / CC / PII]
-                  │
-                  ▼  (Sanitized documents)
-             [AI Agent] ──> Response to User
+User Prompt ──> [Google Gemini (gemini-2.5-flash)]
+                             │
+                             ▼  (Secure MCP Tool Call)
+                   [ShieldDB MCP Gateway]
+                             │
+        ┌────────────────────┴────────────────────┐
+        ▼                                         ▼
+[Inbound Screening]                      [Database Adapter]
+DuoGuard Model Audit                    MongoDB or MongoMock
+(Blocks Jailbreaks / Injections)          (Executes Safe Command)
+                                                  │
+                                                  ▼
+                                        [Outbound Redaction]
+                                       Scrub Emails/CC/PII
+                                                  │
+                             ┌────────────────────┘
+                             ▼
+                (Sanitized Query Results)
+                             │
+                             ▼
+               [Google Gemini AI Brain]
+                             │
+                             ▼
+                    Safe Natural Response
 ```
 
 ---
@@ -49,6 +64,12 @@ User Prompt ──> [AI Agent]
 ## 🚀 Installation & Local Startup
 
 Ensure you have **Python 3.10+** and the **`uv`** package manager installed.
+
+### 0. Environment Setup
+To enable the interactive Gemini chat agent workspace, set your Google Gemini API key as an environment variable (or create a `.env` file in the root directory):
+```bash
+export GEMINI_API_KEY="your_gemini_api_key_here"
+```
 
 ### 1. Pre-download Safety Models
 To ensure instant startup, pre-cache the DuoGuard weights and tokenizers locally:
