@@ -98,6 +98,37 @@ def secure_query(collection: str, query: Optional[str] = None, projection: Optio
             except Exception as pe:
                 return {"success": False, "error": f"Failed to parse 'query' JSON: {pe}"}
                 
+        # Proactively scan parsed query for NoSQL injection and dynamic Javascript execution operators
+        prohibited_ops = ["$where", "$accumulator", "$function", "$ne", "$gt", "$lt"]
+        def scan_operators(item):
+            if isinstance(item, dict):
+                for k, v in item.items():
+                    if k in prohibited_ops:
+                        return k
+                    res = scan_operators(v)
+                    if res:
+                        return res
+            elif isinstance(item, list):
+                for sub in item:
+                    res = scan_operators(sub)
+                    if res:
+                        return res
+            return None
+
+        detected_op = scan_operators(parsed_query)
+        if detected_op:
+            record_violation(
+                event_type="NOSQL_INJECTION_ATTACK",
+                details=f"Prohibited NoSQL/Javascript operator '{detected_op}' detected in search query.",
+                text=query,
+                categories=["Non-violent crimes", "Jailbreak prompts"]
+            )
+            return {
+                "success": False,
+                "security_alert": True,
+                "message": f"DATABASE OPERATION BLOCKED: Inbound query utilized prohibited security operator '{detected_op}'."
+            }
+
         parsed_projection = None
         if projection:
             try:
@@ -177,6 +208,20 @@ def secure_insert(collection: str, document: str, threshold: float = 0.5) -> Dic
             return {
                 "success": False,
                 "error": f"Collection '{collection}' not found. Available collections are: {db_conn.list_collections()}"
+            }
+            
+        # Check for attempt to insert into system configuration or audit log collections directly
+        if collection in ["rules", "security_logs"]:
+            record_violation(
+                event_type="UNAUTHORIZED_WRITE_BLOCKED",
+                details=f"Unauthorized attempt to insert document directly into protected system collection '{collection}'",
+                text=f"INSERT DOCUMENT: {document}",
+                categories=["Non-violent crimes", "Jailbreak prompts"]
+            )
+            return {
+                "success": False,
+                "security_alert": True,
+                "message": f"DATABASE OPERATION BLOCKED: Direct insertion is restricted for protected system collection '{collection}'."
             }
             
         try:
@@ -266,12 +311,12 @@ def secure_delete_or_drop(collection: str, query: Optional[str] = None, drop_col
             }
 
         # Check for attempt to drop important system or seeded collections
-        if drop_collection and collection in ["users", "transactions"]:
+        if drop_collection and collection in ["users", "transactions", "security_logs", "rules"]:
             record_violation(
                 event_type="DESTRUCTIVE_DROP_BLOCKED",
                 details=f"Unauthorized attempt to drop core system collection '{collection}'",
                 text=f"DROP COLLECTION: {collection}",
-                categories=["Violent crimes" if False else "Non-violent crimes", "Jailbreak prompts"] # heuristic
+                categories=["Non-violent crimes", "Jailbreak prompts"] # heuristic
             )
             return {
                 "success": False,

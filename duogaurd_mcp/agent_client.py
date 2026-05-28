@@ -40,6 +40,23 @@ except ImportError as ie:
     logger.error(f"Failed to import required libraries: {ie}. Run 'uv sync' or 'pip install' first.")
     sys.exit(1)
 
+
+def clean_schema(schema):
+    """Recursively removes 'additionalProperties' and 'additional_properties' from JSON schemas for Gemini compatibility."""
+    if not isinstance(schema, dict):
+        return schema
+    cleaned = {}
+    for k, v in schema.items():
+        if k in ["additionalProperties", "additional_properties"]:
+            continue
+        if isinstance(v, dict):
+            cleaned[k] = clean_schema(v)
+        elif isinstance(v, list):
+            cleaned[k] = [clean_schema(item) if isinstance(item, dict) else item for item in v]
+        else:
+            cleaned[k] = v
+    return cleaned
+
 async def run_gemini_mcp_agent():
     # 1. Configure the MCP server parameters to run our ShieldDB server in the background
     # This launches 'python -m duogaurd_mcp.main run' as a subprocess stdio channel
@@ -102,7 +119,7 @@ async def run_gemini_mcp_agent():
                             types.FunctionDeclaration(
                                 name=t_name,
                                 description=t_val.description,
-                                parameters=t_val.inputSchema
+                                parameters=clean_schema(t_val.inputSchema)
                             )
                         )
                     

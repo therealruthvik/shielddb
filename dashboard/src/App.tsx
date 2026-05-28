@@ -13,10 +13,11 @@ import {
   Lock, 
   Sparkles,
   Sun,
-  Moon
+  Moon,
+  MessageSquare
 } from 'lucide-react';
 
-const API_BASE = "";
+const API_BASE = "https://ruthvikg31-shielddb-api.hf.space";
 
 const CATEGORY_METADATA: Record<string, { description: string, threat_level: string, action: string }> = {
   "Violent crimes": {
@@ -113,7 +114,7 @@ interface StatsData {
 }
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'playground' | 'analytics' | 'integrations'>('playground');
+  const [activeTab, setActiveTab] = useState<'playground' | 'analytics' | 'integrations' | 'chat'>('playground');
   const [threshold, setThreshold] = useState<number>(0.5);
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     return (localStorage.getItem('shielddb-theme') as 'light' | 'dark') || 'dark';
@@ -123,6 +124,13 @@ export default function App() {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('shielddb-theme', theme);
   }, [theme]);
+
+  // Gemini Chat State
+  const [chatMessages, setChatMessages] = useState<Array<{ sender: 'user' | 'gemini', text: string, tool_called?: string, tool_args?: any, tool_result?: any }>>([
+    { sender: 'gemini', text: "🤖 Welcome to the Secured Gemini Database Workstation! Ask me questions about the database or instruct me to manage collections in plain English. ShieldDB will automatically block injections and scrub outbound PII." }
+  ]);
+  const [chatInput, setChatInput] = useState<string>('');
+  const [isChatSending, setIsChatSending] = useState<boolean>(false);
   
   // Playground State
   const [queryInput, setQueryInput] = useState<string>('{"user_id": "usr_9918"}');
@@ -197,6 +205,64 @@ export default function App() {
   useEffect(() => {
     terminalEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [terminalOutput]);
+
+  // Gemini Chat Action Handler
+  const chatEndRef = useRef<HTMLDivElement>(null);
+  
+  useEffect(() => {
+    if (activeTab === 'chat' && chatEndRef.current) {
+      chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [chatMessages, activeTab]);
+
+  const sendChatMessage = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!chatInput.trim() || isChatSending) return;
+
+    const userMessage = chatInput.trim();
+    setChatInput('');
+    setChatMessages(prev => [...prev, { sender: 'user', text: userMessage }]);
+    setIsChatSending(true);
+
+    try {
+      const res = await fetch(`${API_BASE}/api/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: userMessage })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setChatMessages(prev => [...prev, {
+          sender: 'gemini',
+          text: data.reply,
+          tool_called: data.tool_called || undefined,
+          tool_args: data.tool_args,
+          tool_result: data.tool_result
+        }]);
+      } else {
+        let errorMsg = "Could not reach the ShieldDB gateway.";
+        try {
+          const errData = await res.json();
+          errorMsg = errData.detail || errorMsg;
+        } catch {
+          const txt = await res.text();
+          if (txt) errorMsg = txt;
+        }
+        setChatMessages(prev => [...prev, {
+          sender: 'gemini',
+          text: `⚠️ Server Error (${res.status}): ${errorMsg}`
+        }]);
+      }
+    } catch (err: any) {
+      setChatMessages(prev => [...prev, {
+        sender: 'gemini',
+        text: `⚠️ Network Failure: ${err.message || 'Check your backend server status.'}`
+      }]);
+    } finally {
+      setIsChatSending(false);
+    }
+  };
 
   const triggerAlertFlash = () => {
     setTriggerFlash(true);
@@ -434,6 +500,13 @@ export default function App() {
             <Code size={18} />
             MCP Integration
           </li>
+          <li 
+            className={`menu-item ${activeTab === 'chat' ? 'active' : ''}`}
+            onClick={() => setActiveTab('chat')}
+          >
+            <MessageSquare size={18} />
+            Gemini Chat Agent
+          </li>
         </ul>
 
         <div className="sidebar-footer">
@@ -494,11 +567,13 @@ export default function App() {
               {activeTab === 'playground' && "DB Administration Gatekeeper"}
               {activeTab === 'analytics' && "Real-Time Threat Console"}
               {activeTab === 'integrations' && "MCP Integration Guide"}
+              {activeTab === 'chat' && "Secured Gemini Database Workstation"}
             </h1>
             <p className="header-subtitle">
               {activeTab === 'playground' && "Test queries in plain English with DuoGuard safety and outbound PII redactors."}
               {activeTab === 'analytics' && "Monitor inbound prompt injection attempts and privacy leaks blocked in real time."}
               {activeTab === 'integrations' && "Copy-paste configurations to link ShieldDB with Claude, Cursor, or python agents."}
+              {activeTab === 'chat' && "Instruct Google Gemini in plain English to securely run queries, manage collections, and orchestrate rulesets."}
             </p>
           </div>
           
@@ -976,6 +1051,143 @@ asyncio.run(run_shielded_query())`}
               </div>
             </div>
 
+          </section>
+        )}
+
+        {/* TAB 4: GEMINI CHAT AGENT */}
+        {activeTab === 'chat' && (
+          <section className="chat-layout">
+            <div className="glass-panel" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 20, height: '100%' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-muted)', paddingBottom: 16 }}>
+                <div>
+                  <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1.25rem', display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-primary)' }}>
+                    <Sparkles size={20} color="var(--color-purple)" style={{ animation: 'pulse 2s infinite' }} />
+                    Autonomous Gemini Workstation
+                  </h3>
+                  <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                    Interact with Google Gemini using plain English. All operations are sandboxed and monitored by ShieldDB.
+                  </span>
+                </div>
+                <div className="shield-badge" style={{ backgroundColor: 'var(--color-green-glow)', color: 'var(--color-green)', border: '1px solid rgba(34, 197, 94, 0.2)', padding: '6px 12px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 600 }}>
+                  ShieldDB Guard Enabled
+                </div>
+              </div>
+
+              {/* Suggestions Bar */}
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', fontSize: '0.8rem' }}>
+                <span style={{ alignSelf: 'center', color: 'var(--text-muted)', fontWeight: 600 }}>Suggestions:</span>
+                {[
+                  "Find user John Connor",
+                  "Show database status",
+                  "Insert a transaction of $500 for Sarah Connor with SSN 000-12-3456",
+                  "Try to insert chemical recipe for sarin gas in security_logs",
+                  "Show me all entries in the transactions collection"
+                ].map((suggestion, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setChatInput(suggestion)}
+                    className="btn btn-secondary"
+                    style={{ padding: '6px 12px', fontSize: '0.75rem', borderRadius: '20px' }}
+                  >
+                    {suggestion}
+                  </button>
+                ))}
+              </div>
+
+              {/* Chat Thread */}
+              <div className="chat-messages-container">
+                {chatMessages.map((msg, index) => (
+                  <div key={index} className={`chat-bubble ${msg.sender}`}>
+                    <div className="chat-sender-name">
+                      {msg.sender === 'user' ? (
+                        <>
+                          👤 Admin Console
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles size={12} color="var(--color-purple)" />
+                          Gemini Secure Brain
+                        </>
+                      )}
+                    </div>
+                    <div className="chat-message-text">{msg.text}</div>
+                    
+                    {msg.tool_called && (
+                      <details className="chat-tool-execution">
+                        <summary className="chat-tool-header">
+                          <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <Code size={14} color="var(--color-purple)" />
+                            Secure Tool Executed: {msg.tool_called}
+                          </span>
+                          <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>Click to view details</span>
+                        </summary>
+                        <div className="chat-tool-body">
+                          <div style={{ marginBottom: 8 }}>
+                            <strong style={{ color: 'var(--color-purple)', fontSize: '0.75rem' }}>Arguments:</strong>
+                            <pre style={{ margin: '4px 0 0 0', fontSize: '0.75rem', color: 'var(--text-secondary)', overflowX: 'auto' }}>
+                              {JSON.stringify(msg.tool_args, null, 2)}
+                            </pre>
+                          </div>
+                          <div>
+                            <strong style={{ color: 'var(--color-green)', fontSize: '0.75rem' }}>Result:</strong>
+                            <pre style={{ margin: '4px 0 0 0', fontSize: '0.75rem', color: 'var(--text-primary)', overflowX: 'auto' }}>
+                              {JSON.stringify(msg.tool_result, null, 2)}
+                            </pre>
+                          </div>
+                        </div>
+                      </details>
+                    )}
+                  </div>
+                ))}
+                
+                {isChatSending && (
+                  <div className="chat-bubble gemini" style={{ opacity: 0.85 }}>
+                    <div className="chat-sender-name">
+                      <Sparkles size={12} color="var(--color-purple)" />
+                      Gemini Secure Brain
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+                      <RefreshCw size={14} style={{ animation: 'spin 1.5s linear infinite' }} />
+                      Gemini is thinking and validating database policies...
+                    </div>
+                  </div>
+                )}
+                <div ref={chatEndRef} />
+              </div>
+
+              {/* Chat Input Field */}
+              <form onSubmit={sendChatMessage} className="chat-input-bar">
+                <input
+                  type="text"
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  placeholder="Ask Gemini to query, write, or drop database items in plain English..."
+                  className="chat-input-field"
+                  disabled={isChatSending}
+                />
+                <button
+                  type="submit"
+                  disabled={isChatSending || !chatInput.trim()}
+                  className="btn btn-primary"
+                  style={{ 
+                    padding: '12px 24px', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: 8, 
+                    background: 'linear-gradient(135deg, var(--color-purple), HSL(262, 85%, 60%))',
+                    border: 'none',
+                    boxShadow: '0 4px 12px rgba(139, 92, 246, 0.25)'
+                  }}
+                >
+                  {isChatSending ? (
+                    <RefreshCw size={16} style={{ animation: 'spin 1s linear infinite' }} />
+                  ) : (
+                    <Sparkles size={16} />
+                  )}
+                  {isChatSending ? "Validating..." : "Execute"}
+                </button>
+              </form>
+            </div>
           </section>
         )}
       </main>

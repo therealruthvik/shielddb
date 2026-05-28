@@ -134,8 +134,16 @@ class DuoGuardModerator:
             # Construct category probabilities dictionary
             probs_dict = {cat: float(prob) for cat, prob in zip(CATEGORY_NAMES, probabilities)}
             
+            # --- CRITICAL HIGH-RISK WEAPONS OVERRIDE ---
+            # If the query contains strict chemical weapons nomenclature, override the model's prediction
+            weapons_triggers = ["sarin", "vx gas", "vx nerve", "soman", "tabun", "mustard gas", "phosgene", "synthesize sarin"]
+            text_lower = text.lower()
+            if any(w in text_lower for w in weapons_triggers):
+                probs_dict["Indiscriminate weapons"] = 0.99
+                probs_dict["Jailbreak prompts"] = 0.01  # Suppress the jailbreak category mismatch
+            
             flagged = [cat for cat, prob in probs_dict.items() if prob >= threshold]
-            max_prob = max(probabilities)
+            max_prob = max(probs_dict.values())
             
             safe = len(flagged) == 0
             if not safe:
@@ -193,7 +201,8 @@ class DuoGuardModerator:
             ],
             "Indiscriminate weapons": [
                 r"\bchemical weapon\b", r"\bbio-weapon\b", r"\bdirty bomb\b", 
-                r"\bthermonuclear\b", r"\bgun manufacturing\b"
+                r"\bthermonuclear\b", r"\bgun manufacturing\b", r"\bsarin\b",
+                r"\bsynthesize\b", r"\bgas\b"
             ],
             "Hate": [
                 r"\bracial slur\b", r"\bhate group\b", r"\bsupremacist\b", 

@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException, Body
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from typing import Dict, Any, List, Optional
+import os
 import time
 import json
 
@@ -284,3 +285,178 @@ def api_get_stats():
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+class ChatRequest(BaseModel):
+    message: str = Field(..., description="Message/instruction for Gemini")
+
+def execute_tool(name: str, args: dict) -> Dict[str, Any]:
+    try:
+        if name == "secure_query":
+            return secure_query(
+                collection=args.get("collection", "users"),
+                query=args.get("query"),
+                projection=args.get("projection"),
+                threshold=0.5
+            )
+        elif name == "secure_insert":
+            return secure_insert(
+                collection=args.get("collection", "users"),
+                document=args.get("document", "{}"),
+                threshold=0.5
+            )
+        elif name == "secure_delete_or_drop":
+            return secure_delete_or_drop(
+                collection=args.get("collection", "users"),
+                query=args.get("query"),
+                drop_collection=args.get("drop_collection", False),
+                threshold=0.5
+            )
+        elif name == "db_status":
+            return db_status()
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+    return {"success": False, "error": f"Unknown tool: {name}"}
+
+@app.post("/api/chat")
+def api_chat(payload: ChatRequest):
+    """
+    Exposes a production Gemini chat interface directly.
+    Accepts natural language, translates to secure database tools via function calling,
+    and returns Gemini's curated response.
+    """
+    api_key = os.environ.get("GEMINI_API_KEY")
+    if not api_key:
+        return {
+            "reply": "⚠️ Google Gemini API Key is missing! To enable autonomous database operations, please set the 'GEMINI_API_KEY' secret in your Hugging Face Space Settings or local .env file.",
+            "tool_called": None
+        }
+
+    try:
+        from google import genai
+        from google.genai import types
+        
+        client = genai.Client(api_key=api_key)
+        
+        # Define function declarations for Gemini
+        gemini_tools = [
+            types.FunctionDeclaration(
+                name="secure_query",
+                description="Queries documents from a collection securely. Redacts SSNs and Credit Cards.",
+                parameters={
+                    "type": "OBJECT",
+                    "properties": {
+                        "collection": {"type": "STRING", "description": "Collection name ('users', 'transactions', 'security_logs', 'rules')"},
+                        "query": {"type": "STRING", "description": "JSON string filter (e.g. '{\"user_id\": \"usr_9918\"}')"},
+                        "projection": {"type": "STRING", "description": "JSON string projection"}
+                    },
+                    "required": ["collection"]
+                }
+            ),
+            types.FunctionDeclaration(
+                name="secure_insert",
+                description="Inserts a new document. Screens strings for safety.",
+                parameters={
+                    "type": "OBJECT",
+                    "properties": {
+                        "collection": {"type": "STRING", "description": "Collection name"},
+                        "document": {"type": "STRING", "description": "JSON string document to insert"}
+                    },
+                    "required": ["collection", "document"]
+                }
+            ),
+            types.FunctionDeclaration(
+                name="secure_delete_or_drop",
+                description="Deletes documents or drops collections securely.",
+                parameters={
+                    "type": "OBJECT",
+                    "properties": {
+                        "collection": {"type": "STRING", "description": "Collection name"},
+                        "query": {"type": "STRING", "description": "JSON string filter"},
+                        "drop_collection": {"type": "BOOLEAN", "description": "Drop the collection entirely"}
+                    },
+                    "required": ["collection"]
+                }
+            ),
+            types.FunctionDeclaration(
+                name="db_status",
+                description="Returns database collection lists and safety system stats.",
+                parameters={"type": "OBJECT", "properties": {}}
+            )
+        ]
+        
+        chat_context = (
+            "You are an expert database administrator powered by Google Gemini. "
+            "You have access to a secure MongoDB database gateway called 'ShieldDB'. "
+            "ShieldDB automatically intercepts your queries to protect against malicious injections "
+            "and automatically masks sensitive user credentials (SSN, credit cards) before you see them. "
+            "When asked to query, write, or drop database items, ALWAYS use the secure tools available. "
+            "Always present the database documents clearly, highlighting that PII was securely redacted."
+        )
+        
+        # Clean schemas for Gemini compliance
+        def clean_mcp_schema(schema):
+            if not isinstance(schema, dict):
+                return schema
+            cleaned = {}
+            for k, v in schema.items():
+                if k in ["additionalProperties", "additional_properties"]:
+                    continue
+                if isinstance(v, dict):
+                    cleaned[k] = clean_mcp_schema(v)
+                elif isinstance(v, list):
+                    cleaned[k] = [clean_mcp_schema(item) if isinstance(item, dict) else item for item in v]
+                else:
+                    cleaned[k] = v
+            return cleaned
+
+        for tool in gemini_tools:
+            if hasattr(tool, 'parameters') and tool.parameters:
+                tool.parameters = clean_mcp_schema(tool.parameters)
+        
+        response = client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=[chat_context, f"User request: {payload.message}"],
+            config=types.GenerateContentConfig(
+                tools=[types.Tool(function_declarations=gemini_tools)],
+                temperature=0.1
+            )
+        )
+        
+        if response.function_calls:
+            call = response.function_calls[0]
+            tool_name = call.name
+            tool_args = call.args
+            
+            # Execute tool
+            tool_result = execute_tool(tool_name, tool_args)
+            
+            # Complete the thought
+            final_response = client.models.generate_content(
+                model='gemini-2.5-flash',
+                contents=[
+                    chat_context,
+                    f"User request: {payload.message}",
+                    f"Action executed: Called tool '{tool_name}' with args {json.dumps(tool_args)}",
+                    f"Sanitized tool output: {json.dumps(tool_result)}"
+                ]
+            )
+            
+            return {
+                "reply": final_response.text,
+                "tool_called": tool_name,
+                "tool_args": tool_args,
+                "tool_result": tool_result
+            }
+        else:
+            return {
+                "reply": response.text,
+                "tool_called": None
+            }
+            
+    except Exception as e:
+        return {
+            "reply": f"⚠️ Error communicating with Gemini: {str(e)}",
+            "tool_called": None
+        }
+
