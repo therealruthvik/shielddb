@@ -73,11 +73,15 @@ def main():
             sys.exit(1)
             
     elif cmd == "populate":
-        logger.info("Initializing database connection...")
-        from duogaurd_mcp.database import ShieldDBConnection
-        db = ShieldDBConnection()
-        logger.info(f"Database active! Collections present: {db.list_collections()}")
-        sys.exit(0)
+        logger.info("Initializing database connection for mass mock data seeding...")
+        from duogaurd_mcp.seed_large_data import seed_large_data
+        try:
+            seed_large_data()
+            logger.info("Database populating completed successfully!")
+            sys.exit(0)
+        except Exception as e:
+            logger.error(f"Error populating database: {e}")
+            sys.exit(1)
         
     elif cmd in ["help", "--help", "-h"]:
         print_help()
