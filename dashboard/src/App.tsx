@@ -595,40 +595,42 @@ export default function App() {
         </header>
 
         {/* --- TELEMETRY SUMMARY ROW --- */}
-        <section className="grid-3">
-          <div className="glass-panel stat-card glowing-green">
-            <div className="stat-header">
-              <span>System Safe Queries</span>
-              <Shield size={16} color="var(--color-green)" />
+        {activeTab !== 'chat' && (
+          <section className="grid-3">
+            <div className="glass-panel stat-card glowing-green">
+              <div className="stat-header">
+                <span>System Safe Queries</span>
+                <Shield size={16} color="var(--color-green)" />
+              </div>
+              <div className="stat-value">
+                {stats?.telemetry.queries_processed || 0}
+                <span className="stat-value-sub">Transactions audited</span>
+              </div>
             </div>
-            <div className="stat-value">
-              {stats?.telemetry.queries_processed || 0}
-              <span className="stat-value-sub">Transactions audited</span>
-            </div>
-          </div>
 
-          <div className="glass-panel stat-card glowing-purple" style={{ borderColor: stats?.telemetry.blocked_queries ? 'var(--color-red)' : '' }}>
-            <div className="stat-header">
-              <span>Blocked Safety Attacks</span>
-              <AlertTriangle size={16} color={stats?.telemetry.blocked_queries ? 'var(--color-red)' : 'var(--color-purple)'} />
+            <div className="glass-panel stat-card glowing-purple" style={{ borderColor: stats?.telemetry.blocked_queries ? 'var(--color-red)' : '' }}>
+              <div className="stat-header">
+                <span>Blocked Safety Attacks</span>
+                <AlertTriangle size={16} color={stats?.telemetry.blocked_queries ? 'var(--color-red)' : 'var(--color-purple)'} />
+              </div>
+              <div className="stat-value" style={{ color: stats?.telemetry.blocked_queries ? 'var(--color-red)' : 'var(--text-primary)' }}>
+                {stats?.telemetry.blocked_queries || 0}
+                <span className="stat-value-sub">Intrusions blocked</span>
+              </div>
             </div>
-            <div className="stat-value" style={{ color: stats?.telemetry.blocked_queries ? 'var(--color-red)' : 'var(--text-primary)' }}>
-              {stats?.telemetry.blocked_queries || 0}
-              <span className="stat-value-sub">Intrusions blocked</span>
-            </div>
-          </div>
 
-          <div className="glass-panel stat-card glowing-purple">
-            <div className="stat-header">
-              <span>PII Outbound Scrubbing</span>
-              <Lock size={16} color="var(--color-purple)" />
+            <div className="glass-panel stat-card glowing-purple">
+              <div className="stat-header">
+                <span>PII Outbound Scrubbing</span>
+                <Lock size={16} color="var(--color-purple)" />
+              </div>
+              <div className="stat-value">
+                {stats?.telemetry.total_redactions || 0}
+                <span className="stat-value-sub">Emails/CC masked</span>
+              </div>
             </div>
-            <div className="stat-value">
-              {stats?.telemetry.total_redactions || 0}
-              <span className="stat-value-sub">Emails/CC masked</span>
-            </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         {/* --- VIEW TABS CARD --- */}
         
