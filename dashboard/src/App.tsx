@@ -11,7 +11,9 @@ import {
   RefreshCw, 
   AlertOctagon, 
   Lock, 
-  Sparkles
+  Sparkles,
+  Sun,
+  Moon
 } from 'lucide-react';
 
 const API_BASE = "";
@@ -113,6 +115,14 @@ interface StatsData {
 export default function App() {
   const [activeTab, setActiveTab] = useState<'playground' | 'analytics' | 'integrations'>('playground');
   const [threshold, setThreshold] = useState<number>(0.5);
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    return (localStorage.getItem('shielddb-theme') as 'light' | 'dark') || 'dark';
+  });
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('shielddb-theme', theme);
+  }, [theme]);
   
   // Playground State
   const [queryInput, setQueryInput] = useState<string>('{"user_id": "usr_9918"}');
@@ -492,10 +502,21 @@ export default function App() {
             </p>
           </div>
           
-          <button className="btn btn-secondary" onClick={fetchStats} style={{ gap: 6 }}>
-            <RefreshCw size={14} />
-            Sync Metrics
-          </button>
+          <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+            <button 
+              className="btn btn-secondary" 
+              onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+              style={{ padding: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+              aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+            >
+              {theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}
+            </button>
+            <button className="btn btn-secondary" onClick={fetchStats} style={{ gap: 6 }}>
+              <RefreshCw size={14} />
+              Sync Metrics
+            </button>
+          </div>
         </header>
 
         {/* --- TELEMETRY SUMMARY ROW --- */}

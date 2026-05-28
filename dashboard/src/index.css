@@ -1,6 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800&family=Fira+Code:wght@400;500&display=swap');
 
-:root {
+:root, [data-theme="light"] {
   /* HSL Color Palette - Premium Modern SaaS Light Mode */
   --bg-primary: HSL(220, 14%, 96%);
   --bg-secondary: HSL(0, 0%, 100%);
@@ -24,6 +24,7 @@
   
   --border-glow: rgba(139, 92, 246, 0.15);
   --border-muted: rgba(0, 0, 0, 0.06);
+  --border-hover: rgba(0, 0, 0, 0.12);
   
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-display: 'Outfit', sans-serif;
@@ -31,6 +32,47 @@
   
   --transition-fast: 0.15s ease;
   --transition-normal: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+
+  --grid-line: rgba(0, 0, 0, 0.015);
+  --radial-glow-1: rgba(139, 92, 246, 0.03);
+  --radial-glow-2: rgba(34, 197, 94, 0.02);
+
+  --glass-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.03), 0 2px 8px -1px rgba(0, 0, 0, 0.01);
+  --glass-shadow-hover: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 4px 12px -2px rgba(0, 0, 0, 0.02);
+}
+
+[data-theme="dark"] {
+  /* HSL Color Palette - Premium Cyberpunk Space Dark Mode */
+  --bg-primary: HSL(224, 25%, 6%);
+  --bg-secondary: HSL(222, 24%, 10%);
+  --bg-tertiary: HSL(222, 20%, 15%);
+  
+  --color-green: HSL(142, 75%, 45%);
+  --color-green-glow: rgba(34, 197, 94, 0.12);
+  
+  --color-purple: HSL(262, 90%, 65%);
+  --color-purple-glow: rgba(168, 85, 247, 0.12);
+  
+  --color-red: HSL(350, 85%, 55%);
+  --color-red-glow: rgba(239, 68, 68, 0.12);
+  
+  --color-amber: HSL(38, 95%, 50%);
+  --color-amber-glow: rgba(245, 158, 11, 0.12);
+
+  --text-primary: HSL(210, 40%, 98%);
+  --text-secondary: HSL(215, 20%, 75%);
+  --text-muted: HSL(215, 16%, 55%);
+  
+  --border-glow: rgba(168, 85, 247, 0.25);
+  --border-muted: rgba(255, 255, 255, 0.08);
+  --border-hover: rgba(255, 255, 255, 0.16);
+
+  --grid-line: rgba(255, 255, 255, 0.02);
+  --radial-glow-1: rgba(168, 85, 247, 0.08);
+  --radial-glow-2: rgba(34, 197, 94, 0.06);
+
+  --glass-shadow: 0 4px 30px rgba(0, 0, 0, 0.4), 0 2px 10px rgba(0, 0, 0, 0.2);
+  --glass-shadow-hover: 0 10px 40px rgba(0, 0, 0, 0.6), 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 
 /* Base Styles & Faint Grid Backgrounds */
@@ -47,13 +89,14 @@ body {
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   position: relative;
+  transition: background-color var(--transition-normal), color var(--transition-normal);
   
   /* Very faint light grid and ambient glows */
   background-image: 
-    radial-gradient(at 0% 0%, rgba(139, 92, 246, 0.03) 0px, transparent 50%),
-    radial-gradient(at 100% 0%, rgba(34, 197, 94, 0.02) 0px, transparent 50%),
-    linear-gradient(to right, rgba(0, 0, 0, 0.01) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(0, 0, 0, 0.01) 1px, transparent 1px);
+    radial-gradient(at 0% 0%, var(--radial-glow-1) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, var(--radial-glow-2) 0px, transparent 50%),
+    linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
   background-size: 100% 100%, 100% 100%, 50px 50px, 50px 50px;
 }
 
@@ -267,22 +310,24 @@ body {
   border: 1px solid var(--border-muted);
   border-radius: 12px;
   padding: 24px;
-  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.03), 0 2px 8px -1px rgba(0, 0, 0, 0.01);
-  transition: var(--transition-normal);
+  box-shadow: var(--glass-shadow);
+  transition: background-color var(--transition-normal), border-color var(--transition-normal), box-shadow var(--transition-normal), transform var(--transition-fast);
   animation: slide-in 0.4s ease-out;
 }
 
 .glass-panel:hover {
-  border-color: rgba(0, 0, 0, 0.1);
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 4px 12px -2px rgba(0, 0, 0, 0.02);
+  border-color: var(--border-hover);
+  box-shadow: var(--glass-shadow-hover);
 }
 
 .glass-panel.glowing-green {
-  border-color: rgba(34, 197, 94, 0.25);
+  border-color: rgba(34, 197, 94, 0.35);
+  box-shadow: var(--glass-shadow), 0 0 20px rgba(34, 197, 94, 0.05);
 }
 
 .glass-panel.glowing-purple {
-  border-color: rgba(139, 92, 246, 0.25);
+  border-color: rgba(168, 85, 247, 0.35);
+  box-shadow: var(--glass-shadow), 0 0 20px rgba(168, 85, 247, 0.05);
 }
 
 /* Grid composition */
