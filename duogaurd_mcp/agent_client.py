@@ -125,7 +125,7 @@ async def run_gemini_mcp_agent():
                     
                     # Call Gemini
                     response = client.models.generate_content(
-                        model='gemini-3.5-flash',
+                        model='gemini-2.5-flash',
                         contents=[*chat_context, f"User request: {user_prompt}"],
                         config=types.GenerateContentConfig(
                             tools=[types.Tool(function_declarations=gemini_tools)],
@@ -149,7 +149,7 @@ async def run_gemini_mcp_agent():
                             
                             # Let Gemini process the secure redacted output and formulate the final answer to the user
                             final_response = client.models.generate_content(
-                                model='gemini-3.5-flash',
+                                model='gemini-2.5-flash',
                                 contents=[
                                     *chat_context,
                                     f"User request: {user_prompt}",
