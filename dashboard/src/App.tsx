@@ -471,6 +471,31 @@ export default function App() {
     }
   };
 
+  const renderMarkdown = (text: string): string => {
+    let html = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    html = html.replace(/```[\w]*\n?([\s\S]*?)```/g, '<pre style="background:var(--bg-secondary);padding:8px 12px;border-radius:6px;font-size:0.78rem;overflow-x:auto;margin:6px 0">$1</pre>');
+    html = html.replace(/`([^`\n]+)`/g, '<code style="background:var(--bg-secondary);padding:1px 5px;border-radius:3px;font-family:var(--font-mono);font-size:0.85em">$1</code>');
+    html = html.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
+    html = html.replace(/\*([^*\n]+)\*/g, '<em>$1</em>');
+    const lines = html.split('\n');
+    const out: string[] = [];
+    let inList = false;
+    for (const line of lines) {
+      if (/^\s*[-•]\s+/.test(line)) {
+        if (!inList) { out.push('<ul style="margin:6px 0;padding-left:18px;display:flex;flex-direction:column;gap:3px">'); inList = true; }
+        out.push(`<li>${line.replace(/^\s*[-•]\s+/, '')}</li>`);
+      } else if (/^\s*\d+\.\s+/.test(line)) {
+        if (!inList) { out.push('<ol style="margin:6px 0;padding-left:18px;display:flex;flex-direction:column;gap:3px">'); inList = true; }
+        out.push(`<li>${line.replace(/^\s*\d+\.\s+/, '')}</li>`);
+      } else {
+        if (inList) { out.push(inList ? '</ul>' : '</ol>'); inList = false; }
+        out.push(line === '' ? '<br>' : `<span>${line}</span><br>`);
+      }
+    }
+    if (inList) out.push('</ul>');
+    return out.join('');
+  };
+
   const getThreatColor = (level: string) => {
     if (level === 'CRITICAL') return '#ef4444';
     if (level === 'HIGH') return '#a855f7';
@@ -969,7 +994,7 @@ export default function App() {
                   <span>claude_desktop_config.json</span>
                   <button 
                     className="copy-btn" 
-                    onClick={() => copyToClipboard(`{\n  "mcpServers": {\n    "shield-db": {\n      "command": "uv",\n      "args": [\n        "run",\n        "--project",\n        "/Users/ruthvikg/pythonprojects/duogaurd_mcp",\n        "python",\n        "-m",\n        "duogaurd_mcp.main",\n        "run"\n      ]\n    }\n  }\n}`, 'claude')}
+                    onClick={() => copyToClipboard(`{\n  "mcpServers": {\n    "shield-db": {\n      "command": "uv",\n      "args": [\n        "run",\n        "--project",\n        "/path/to/duogaurd_mcp",\n        "python",\n        "-m",\n        "duogaurd_mcp.main",\n        "run"\n      ]\n    }\n  }\n}`, 'claude')}
                   >
                     {copiedSection === 'claude' ? <Check size={14} /> : <Copy size={14} />}
                     {copiedSection === 'claude' ? 'Copied!' : 'Copy snippet'}
@@ -983,7 +1008,7 @@ export default function App() {
       "args": [
         "run",
         "--project",
-        "/Users/ruthvikg/pythonprojects/duogaurd_mcp",
+        "/path/to/duogaurd_mcp",
         "python",
         "-m",
         "duogaurd_mcp.main",
@@ -1013,7 +1038,7 @@ export default function App() {
                   <ul style={{ margin: '4px 20px', listStyleType: 'circle', display: 'flex', flexDirection: 'column', gap: 4 }}>
                     <li><strong>Name:</strong> <code style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem' }}>shield-db</code></li>
                     <li><strong>Type:</strong> <code style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem' }}>command</code></li>
-                    <li><strong>Command:</strong> <code style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem' }}>uv run --project /Users/ruthvikg/pythonprojects/duogaurd_mcp python -m duogaurd_mcp.main run</code></li>
+                    <li><strong>Command:</strong> <code style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem' }}>uv run --project /path/to/duogaurd_mcp python -m duogaurd_mcp.main run</code></li>
                   </ul>
                 </li>
               </ol>
@@ -1034,7 +1059,7 @@ export default function App() {
                   <span>agent.py</span>
                   <button 
                     className="copy-btn" 
-                    onClick={() => copyToClipboard(`import asyncio\nfrom mcp import ClientSession, StdioServerParameters\nfrom mcp.client.stdio import stdio_client\n\nasync def run_shielded_query():\n    server_params = StdioServerParameters(\n        command="uv",\n        args=["run", "--project", "/Users/ruthvikg/pythonprojects/duogaurd_mcp", "python", "-m", "duogaurd_mcp.main", "run"]\n    )\n    async with stdio_client(server_params) as (read_stream, write_stream):\n        async with ClientSession(read_stream, write_stream) as session:\n            await session.initialize()\n            # Call secure query tool\n            result = await session.call_tool("secure_query", {\n                "collection": "users",\n                "query": '{"user_id": "usr_9918"}'\n            })\n            print("Guarded Output:", result.content[0].text)\n\nasyncio.run(run_shielded_query())`, 'python')}
+                    onClick={() => copyToClipboard(`import asyncio\nfrom mcp import ClientSession, StdioServerParameters\nfrom mcp.client.stdio import stdio_client\n\nasync def run_shielded_query():\n    server_params = StdioServerParameters(\n        command="uv",\n        args=["run", "--project", "/path/to/duogaurd_mcp", "python", "-m", "duogaurd_mcp.main", "run"]\n    )\n    async with stdio_client(server_params) as (read_stream, write_stream):\n        async with ClientSession(read_stream, write_stream) as session:\n            await session.initialize()\n            # Call secure query tool\n            result = await session.call_tool("secure_query", {\n                "collection": "users",\n                "query": '{"user_id": "usr_9918"}'\n            })\n            print("Guarded Output:", result.content[0].text)\n\nasyncio.run(run_shielded_query())`, 'python')}
                   >
                     {copiedSection === 'python' ? <Check size={14} /> : <Copy size={14} />}
                     {copiedSection === 'python' ? 'Copied!' : 'Copy snippet'}
@@ -1048,7 +1073,7 @@ from mcp.client.stdio import stdio_client
 async def run_shielded_query():
     server_params = StdioServerParameters(
         command="uv",
-        args=["run", "--project", "/Users/ruthvikg/pythonprojects/duogaurd_mcp", "python", "-m", "duogaurd_mcp.main", "run"]
+        args=["run", "--project", "/path/to/duogaurd_mcp", "python", "-m", "duogaurd_mcp.main", "run"]
     )
     async with stdio_client(server_params) as (read_stream, write_stream):
         async with ClientSession(read_stream, write_stream) as session:
@@ -1125,7 +1150,7 @@ asyncio.run(run_shielded_query())`}
                         </>
                       )}
                     </div>
-                    <div className="chat-message-text">{msg.text}</div>
+                    <div className="chat-message-text" dangerouslySetInnerHTML={{ __html: msg.sender === 'gemini' ? renderMarkdown(msg.text) : msg.text }} />
                     
                     {msg.tool_called && (
                       <details className="chat-tool-execution">
