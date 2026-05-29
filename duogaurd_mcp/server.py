@@ -99,7 +99,7 @@ def secure_query(collection: str, query: Optional[str] = None, projection: Optio
                 return {"success": False, "error": f"Failed to parse 'query' JSON: {pe}"}
                 
         # Proactively scan parsed query for NoSQL injection and dynamic Javascript execution operators
-        prohibited_ops = ["$where", "$accumulator", "$function", "$ne", "$gt", "$lt"]
+        prohibited_ops = ["$where", "$accumulator", "$function"]
         def scan_operators(item):
             if isinstance(item, dict):
                 for k, v in item.items():

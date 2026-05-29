@@ -136,7 +136,13 @@ class DuoGuardModerator:
             
             # --- CRITICAL HIGH-RISK WEAPONS OVERRIDE ---
             # If the query contains strict chemical weapons nomenclature, override the model's prediction
-            weapons_triggers = ["sarin", "vx gas", "vx nerve", "soman", "tabun", "mustard gas", "phosgene", "synthesize sarin"]
+            weapons_triggers = [
+                "sarin", "vx gas", "vx nerve", "soman", "tabun", "mustard gas", "phosgene", "synthesize sarin",
+                "chemical weapon", "biological weapon", "bioweapon", "bio weapon",
+                "nuclear payload", "nuclear warhead", "dirty bomb", "nerve agent",
+                "synthesize weapon", "weapon variant", "biological nuclear",
+                "weaponize", "lethal agent", "mass casualty"
+            ]
             text_lower = text.lower()
             if any(w in text_lower for w in weapons_triggers):
                 probs_dict["Indiscriminate weapons"] = 0.99
