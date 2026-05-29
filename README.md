@@ -11,6 +11,10 @@ pinned: false
 # ShieldDB 🛡️
 ### The Secured Google Gemini Database Workstation & MCP Gateway
 
+**[▶ Watch Demo Video](https://drive.google.com/file/d/1QgQGtwEuir9pzHgEuJzfssrkNn6IIMuy/view?usp=sharing)**
+
+---
+
 **ShieldDB** is an enterprise-grade Model Context Protocol (MCP) gateway, security sidecar, and interactive workstation that enables **Google Gemini** to securely administer databases. Powered by **gemini-3.5-flash**, the workstation translates plain English instructions into complex database operations. To ensure enterprise compliance and prevent malicious exploits, all Gemini database interactions are intercepted and audited by **DuoGuard-0.5B**—a state-of-the-art multilingual safety classifier that blocks inbound prompt injections and automatically redacts outbound customer PII.
 
 ---
