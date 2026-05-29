@@ -1,3 +1,13 @@
+---
+title: ShieldDB API
+emoji: 🛡️
+colorFrom: blue
+colorTo: purple
+sdk: docker
+app_port: 8000
+pinned: false
+---
+
 # ShieldDB 🛡️
 ### The Secured Google Gemini Database Workstation & MCP Gateway
 
