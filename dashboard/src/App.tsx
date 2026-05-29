@@ -156,6 +156,7 @@ export default function App() {
   // Telemetry Dashboard Stats
   const [stats, setStats] = useState<StatsData | null>(null);
   const [isPolling, setIsPolling] = useState<boolean>(true);
+  const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const [copiedSection, setCopiedSection] = useState<string>('');
   const [categoriesMetadata, setCategoriesMetadata] = useState<Record<string, { description: string, threat_level: string, action: string }>>(CATEGORY_METADATA);
 
@@ -180,7 +181,8 @@ export default function App() {
   const terminalEndRef = useRef<HTMLDivElement>(null);
 
   // Poll Stats from FastAPI
-  const fetchStats = async () => {
+  const fetchStats = async (manual = false) => {
+    if (manual) setIsSyncing(true);
     try {
       const res = await fetch(`${API_BASE}/api/stats`);
       if (res.ok) {
@@ -189,6 +191,8 @@ export default function App() {
       }
     } catch (e) {
       console.warn("Failed to fetch API stats. Make sure FastAPI server is running on port 8000.", e);
+    } finally {
+      if (manual) setIsSyncing(false);
     }
   };
 
@@ -596,9 +600,9 @@ export default function App() {
             >
               {theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}
             </button>
-            <button className="btn btn-secondary" onClick={fetchStats} style={{ gap: 6 }}>
-              <RefreshCw size={14} />
-              Sync Metrics
+            <button className="btn btn-secondary" onClick={() => fetchStats(true)} disabled={isSyncing} style={{ gap: 6 }}>
+              <RefreshCw size={14} style={{ animation: isSyncing ? 'spin 0.8s linear infinite' : 'none' }} />
+              {isSyncing ? 'Syncing...' : 'Sync Metrics'}
             </button>
           </div>
         </header>
