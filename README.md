@@ -11,7 +11,7 @@ pinned: false
 # ShieldDB 🛡️
 ### The Secured Google Gemini Database Workstation & MCP Gateway
 
-**[▶ Watch Demo Video](https://drive.google.com/file/d/1QgQGtwEuir9pzHgEuJzfssrkNn6IIMuy/view?usp=sharing)**
+**[▶ Watch Demo Video](https://vimeo.com/1196684739)**
 
 ---
 
