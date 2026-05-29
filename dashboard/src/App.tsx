@@ -384,6 +384,12 @@ export default function App() {
       setIsRunning(false);
       setActiveLatency(data.latency_ms || 12);
 
+      if (data.success === false || data.error) {
+        logToTerminal(`⚠️ DATABASE ERROR: ${data.error || data.message || "Operation failed."}`, 'red');
+        setIsSafe(false);
+        return;
+      }
+
       // Handle safety response
       if (data.security_alert) {
         setIsSafe(false);
