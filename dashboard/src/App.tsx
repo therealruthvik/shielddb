@@ -17,7 +17,7 @@ import {
   MessageSquare
 } from 'lucide-react';
 
-const API_BASE = "https://ruthvikg31-shielddb-api.hf.space";
+const API_BASE = "https://shielddb-api.onrender.com";
 
 const CATEGORY_METADATA: Record<string, { description: string, threat_level: string, action: string }> = {
   "Violent crimes": {
