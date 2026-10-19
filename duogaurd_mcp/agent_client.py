@@ -20,20 +20,19 @@ except ImportError:
     pass
 
 # Check for API key
-api_key = os.environ.get("GEMINI_API_KEY")
+api_key = os.environ.get("GROQ_API_KEY")
 if not api_key:
     logger.error("=" * 60)
-    logger.error("⚠️  MISSING GOOGLE GEMINI API KEY!")
+    logger.error("⚠️  MISSING GROQ API KEY!")
     logger.error("Please create a '.env' file in the root directory and add:")
-    logger.error("  GEMINI_API_KEY=AIzaSy...")
-    logger.error("You can get a free API key from Google AI Studio (https://aistudio.google.com)")
+    logger.error("  GROQ_API_KEY=gsk_...")
+    logger.error("You can get a free API key from the Groq Console (https://console.groq.com/keys)")
     logger.error("=" * 60)
     sys.exit(1)
 
-# Import google-genai SDK and MCP components
+# Import Groq client and MCP components
 try:
-    from google import genai
-    from google.genai import types
+    from duogaurd_mcp.groq_client import chat_completion, GROQ_CHAT_MODEL
     from mcp import ClientSession, StdioServerParameters
     from mcp.client.stdio import stdio_client
 except ImportError as ie:
@@ -41,23 +40,7 @@ except ImportError as ie:
     sys.exit(1)
 
 
-def clean_schema(schema):
-    """Recursively removes 'additionalProperties' and 'additional_properties' from JSON schemas for Gemini compatibility."""
-    if not isinstance(schema, dict):
-        return schema
-    cleaned = {}
-    for k, v in schema.items():
-        if k in ["additionalProperties", "additional_properties"]:
-            continue
-        if isinstance(v, dict):
-            cleaned[k] = clean_schema(v)
-        elif isinstance(v, list):
-            cleaned[k] = [clean_schema(item) if isinstance(item, dict) else item for item in v]
-        else:
-            cleaned[k] = v
-    return cleaned
-
-async def run_gemini_mcp_agent():
+async def run_mcp_agent():
     # 1. Configure the MCP server parameters to run our ShieldDB server in the background
     # This launches 'python -m duogaurd_mcp.main run' as a subprocess stdio channel
     logger.info("Initializing ShieldDB MCP Secure Gateway in background...")
@@ -77,27 +60,36 @@ async def run_gemini_mcp_agent():
             available_tools = {tool.name: tool for tool in tools_list.tools}
             logger.info(f"Connected! Secure tools discovered: {list(available_tools.keys())}")
             
-            # 4. Initialize the Google GenAI Client
-            logger.info("Initializing Google Gemini AI Client...")
-            client = genai.Client(api_key=api_key)
+            # 4. Describe the ShieldDB tools as function declarations so the model knows how to use them
+            chat_tools = [
+                {
+                    "type": "function",
+                    "function": {
+                        "name": t_name,
+                        "description": t_val.description,
+                        "parameters": t_val.inputSchema
+                    }
+                }
+                for t_name, t_val in available_tools.items()
+            ]
             
             # 5. Define an interactive chat loop
             print("\n" + "=" * 60)
-            print("🤖 WELCOME TO THE SECURED GEMINI DATABASE WORKSTATION!")
-            print("Ask Gemini questions about the database in plain English.")
+            print("🤖 WELCOME TO THE SECURED AI DATABASE WORKSTATION!")
+            print("Ask the agent questions about the database in plain English.")
             print("ShieldDB will automatically block injections and scrub outbound PII.")
             print("Type 'exit' or 'quit' to close the workstation.")
             print("=" * 60 + "\n")
             
             # Create a simple chat history
-            chat_context = [
-                "You are an expert database administrator powered by Google Gemini.",
+            chat_context = " ".join([
+                "You are an expert database administrator.",
                 "You have access to a secure MongoDB database gateway called 'ShieldDB'.",
                 "ShieldDB automatically intercepts your queries to protect against malicious injections",
                 "and automatically masks sensitive user credentials (SSN, credit cards) before you see them.",
                 "When asked to query, write, or drop database items, ALWAYS use the secure tools available.",
                 "Always present the database documents clearly to the user, highlighting that PII was securely redacted."
-            ]
+            ])
             
             while True:
                 try:
@@ -108,66 +100,53 @@ async def run_gemini_mcp_agent():
                         print("Terminating secure database session. Goodbye!")
                         break
                         
-                    print("🤖 Gemini is thinking...")
+                    print("🤖 Agent is thinking...")
                     
-                    # 6. Ask Gemini what it wants to do. We pass the ShieldDB tools as function declarations!
-                    # Gemini will decide whether to call a tool or chat directly.
-                    # We describe the tools so Gemini knows how to use them.
-                    gemini_tools = []
-                    for t_name, t_val in available_tools.items():
-                        gemini_tools.append(
-                            types.FunctionDeclaration(
-                                name=t_name,
-                                description=t_val.description,
-                                parameters=clean_schema(t_val.inputSchema)
-                            )
-                        )
+                    # 5. Ask the model what it wants to do. It decides whether to call a tool or chat directly.
+                    messages = [
+                        {"role": "system", "content": chat_context},
+                        {"role": "user", "content": user_prompt}
+                    ]
+                    response = chat_completion({
+                        "model": GROQ_CHAT_MODEL,
+                        "messages": messages,
+                        "tools": chat_tools,
+                        "temperature": 0.1
+                    })
                     
-                    # Call Gemini
-                    response = client.models.generate_content(
-                        model='gemini-2.5-flash',
-                        contents=[*chat_context, f"User request: {user_prompt}"],
-                        config=types.GenerateContentConfig(
-                            tools=[types.Tool(function_declarations=gemini_tools)],
-                            temperature=0.1
-                        )
-                    )
-                    
-                    # 7. Handle tool calls requested by Gemini
-                    if response.function_calls:
-                        for call in response.function_calls:
-                            tool_name = call.name
-                            tool_args = call.args
+                    # 6. Handle tool calls requested by the model
+                    if response.get("tool_calls"):
+                        messages.append({"role": "assistant", "content": response.get("content") or "", "tool_calls": response["tool_calls"]})
+                        for call in response["tool_calls"]:
+                            tool_name = call["function"]["name"]
+                            tool_args = json.loads(call["function"]["arguments"] or "{}")
                             
                             print(f"   [ShieldDB Gateway] Intercepting tool call: {tool_name} with arguments {json.dumps(tool_args)}")
                             
                             # Execute the secure tool call on our MCP server!
                             tool_result = await session.call_tool(tool_name, tool_args)
                             result_text = tool_result.content[0].text
+                            messages.append({"role": "tool", "tool_call_id": call["id"], "content": result_text})
                             
-                            print("   [ShieldDB Gateway] Safety audit complete. Forwarding sanitized results to Gemini.")
-                            
-                            # Let Gemini process the secure redacted output and formulate the final answer to the user
-                            final_response = client.models.generate_content(
-                                model='gemini-2.5-flash',
-                                contents=[
-                                    *chat_context,
-                                    f"User request: {user_prompt}",
-                                    f"Action executed: Called tool '{tool_name}' with args {json.dumps(tool_args)}",
-                                    f"Sanitized tool output: {result_text}"
-                                ]
-                            )
-                            
-                            print(f"\n🤖 Gemini: {final_response.text}")
+                        print("   [ShieldDB Gateway] Safety audit complete. Forwarding sanitized results to the agent.")
+                        
+                        # Let the model process the secure redacted output and formulate the final answer to the user
+                        final_response = chat_completion({
+                            "model": GROQ_CHAT_MODEL,
+                            "messages": messages,
+                            "temperature": 0.1
+                        })
+                        
+                        print(f"\n🤖 Agent: {final_response.get('content')}")
                     else:
-                        print(f"\n🤖 Gemini: {response.text}")
+                        print(f"\n🤖 Agent: {response.get('content')}")
                         
                 except Exception as e:
                     print(f"\n⚠️ Error during processing: {e}")
 
 def main():
     try:
-        asyncio.run(run_gemini_mcp_agent())
+        asyncio.run(run_mcp_agent())
     except KeyboardInterrupt:
         print("\nSession aborted by user. Exiting secure gateway.")
 

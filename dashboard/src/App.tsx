@@ -125,9 +125,9 @@ export default function App() {
     localStorage.setItem('shielddb-theme', theme);
   }, [theme]);
 
-  // Gemini Chat State
-  const [chatMessages, setChatMessages] = useState<Array<{ sender: 'user' | 'gemini', text: string, tool_called?: string, tool_args?: any, tool_result?: any }>>([
-    { sender: 'gemini', text: "🤖 Welcome to the Secured Gemini Database Workstation! Ask me questions about the database or instruct me to manage collections in plain English. ShieldDB will automatically block injections and scrub outbound PII." }
+  // Chat State
+  const [chatMessages, setChatMessages] = useState<Array<{ sender: 'user' | 'agent', text: string, tool_called?: string, tool_args?: any, tool_result?: any }>>([
+    { sender: 'agent', text: "🤖 Welcome to the Secured AI Database Workstation! Ask me questions about the database or instruct me to manage collections in plain English. ShieldDB will automatically block injections and scrub outbound PII." }
   ]);
   const [chatInput, setChatInput] = useState<string>('');
   const [isChatSending, setIsChatSending] = useState<boolean>(false);
@@ -210,7 +210,7 @@ export default function App() {
     terminalEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [terminalOutput]);
 
-  // Gemini Chat Action Handler
+  // Chat Action Handler
   const chatEndRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
@@ -238,7 +238,7 @@ export default function App() {
       if (res.ok) {
         const data = await res.json();
         setChatMessages(prev => [...prev, {
-          sender: 'gemini',
+          sender: 'agent',
           text: data.reply,
           tool_called: data.tool_called || undefined,
           tool_args: data.tool_args,
@@ -254,13 +254,13 @@ export default function App() {
           if (txt) errorMsg = txt;
         }
         setChatMessages(prev => [...prev, {
-          sender: 'gemini',
+          sender: 'agent',
           text: `⚠️ Server Error (${res.status}): ${errorMsg}`
         }]);
       }
     } catch (err: any) {
       setChatMessages(prev => [...prev, {
-        sender: 'gemini',
+        sender: 'agent',
         text: `⚠️ Network Failure: ${err.message || 'Check your backend server status.'}`
       }]);
     } finally {
@@ -543,7 +543,7 @@ export default function App() {
             onClick={() => setActiveTab('chat')}
           >
             <MessageSquare size={18} />
-            Gemini Chat Agent
+            AI Chat Agent
           </li>
         </ul>
 
@@ -605,13 +605,13 @@ export default function App() {
               {activeTab === 'playground' && "DB Administration Gatekeeper"}
               {activeTab === 'analytics' && "Real-Time Threat Console"}
               {activeTab === 'integrations' && "MCP Integration Guide"}
-              {activeTab === 'chat' && "Secured Gemini Database Workstation"}
+              {activeTab === 'chat' && "Secured AI Database Workstation"}
             </h1>
             <p className="header-subtitle">
               {activeTab === 'playground' && "Test queries in plain English with DuoGuard safety and outbound PII redactors."}
               {activeTab === 'analytics' && "Monitor inbound prompt injection attempts and privacy leaks blocked in real time."}
               {activeTab === 'integrations' && "Copy-paste configurations to link ShieldDB with Claude, Cursor, or python agents."}
-              {activeTab === 'chat' && "Instruct Google Gemini in plain English to securely run queries, manage collections, and orchestrate rulesets."}
+              {activeTab === 'chat' && "Instruct the AI agent in plain English to securely run queries, manage collections, and orchestrate rulesets."}
             </p>
           </div>
           
@@ -1094,7 +1094,7 @@ asyncio.run(run_shielded_query())`}
           </section>
         )}
 
-        {/* TAB 4: GEMINI CHAT AGENT */}
+        {/* TAB 4: AI CHAT AGENT */}
         {activeTab === 'chat' && (
           <section className="chat-layout">
             <div className="glass-panel" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 20, height: '100%' }}>
@@ -1102,10 +1102,10 @@ asyncio.run(run_shielded_query())`}
                 <div>
                   <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1.25rem', display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-primary)' }}>
                     <Sparkles size={20} color="var(--color-purple)" style={{ animation: 'pulse 2s infinite' }} />
-                    Autonomous Gemini Workstation
+                    Autonomous AI Workstation
                   </h3>
                   <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                    Interact with Google Gemini using plain English. All operations are sandboxed and monitored by ShieldDB.
+                    Interact with the AI agent using plain English. All operations are sandboxed and monitored by ShieldDB.
                   </span>
                 </div>
                 <div className="shield-badge" style={{ backgroundColor: 'var(--color-green-glow)', color: 'var(--color-green)', border: '1px solid rgba(34, 197, 94, 0.2)', padding: '6px 12px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 600 }}>
@@ -1146,11 +1146,11 @@ asyncio.run(run_shielded_query())`}
                       ) : (
                         <>
                           <Sparkles size={12} color="var(--color-purple)" />
-                          Gemini Secure Brain
+                          ShieldDB Agent
                         </>
                       )}
                     </div>
-                    <div className="chat-message-text" dangerouslySetInnerHTML={{ __html: msg.sender === 'gemini' ? renderMarkdown(msg.text) : msg.text }} />
+                    <div className="chat-message-text" dangerouslySetInnerHTML={{ __html: msg.sender === 'agent' ? renderMarkdown(msg.text) : msg.text }} />
                     
                     {msg.tool_called && (
                       <details className="chat-tool-execution">
@@ -1181,14 +1181,14 @@ asyncio.run(run_shielded_query())`}
                 ))}
                 
                 {isChatSending && (
-                  <div className="chat-bubble gemini" style={{ opacity: 0.85 }}>
+                  <div className="chat-bubble agent" style={{ opacity: 0.85 }}>
                     <div className="chat-sender-name">
                       <Sparkles size={12} color="var(--color-purple)" />
-                      Gemini Secure Brain
+                      ShieldDB Agent
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
                       <RefreshCw size={14} style={{ animation: 'spin 1.5s linear infinite' }} />
-                      Gemini is thinking and validating database policies...
+                      Agent is thinking and validating database policies...
                     </div>
                   </div>
                 )}
@@ -1201,7 +1201,7 @@ asyncio.run(run_shielded_query())`}
                   type="text"
                   value={chatInput}
                   onChange={(e) => setChatInput(e.target.value)}
-                  placeholder="Ask Gemini to query, write, or drop database items in plain English..."
+                  placeholder="Ask the agent to query, write, or drop database items in plain English..."
                   className="chat-input-field"
                   disabled={isChatSending}
                 />

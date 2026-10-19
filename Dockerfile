@@ -9,7 +9,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY pyproject.toml README.md /app/
 COPY duogaurd_mcp /app/duogaurd_mcp
 
-RUN pip install --no-cache-dir .
+# --group local pulls torch/transformers for the bundled DuoGuard model (needs pip >= 25.1)
+RUN pip install --no-cache-dir -U pip && pip install --no-cache-dir . --group local
 
 RUN python -m duogaurd_mcp.main download
 

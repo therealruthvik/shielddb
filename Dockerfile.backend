@@ -12,7 +12,8 @@ COPY pyproject.toml README.md /app/
 COPY duogaurd_mcp /app/duogaurd_mcp
 
 # Install python dependencies from pyproject.toml
-RUN pip install --no-cache-dir .
+# --group local pulls torch/transformers for the bundled DuoGuard model (needs pip >= 25.1)
+RUN pip install --no-cache-dir -U pip && pip install --no-cache-dir . --group local
 
 # Pre-download and cache the DuoGuard-0.5B model in the Docker image 
 # so that the container starts up instantly on boot!

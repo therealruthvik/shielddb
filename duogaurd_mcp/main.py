@@ -57,7 +57,7 @@ def main():
             pass
             
         logger.info("Starting Uvicorn REST API server on http://localhost:8000...")
-        uvicorn.run(app, host="0.0.0.0", port=8000, log_level="info")
+        uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 8000)), log_level="info")
         
     elif cmd == "download":
         logger.info("Running manual pre-download check for DuoGuard models...")

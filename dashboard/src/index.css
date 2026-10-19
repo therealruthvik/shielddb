@@ -872,7 +872,7 @@ body {
   100% { left: 100%; }
 }
 
-/* Gemini Chat Agent Dashboard Section Styles */
+/* AI Chat Agent Dashboard Section Styles */
 .chat-layout {
   display: flex;
   flex-direction: column;
@@ -916,7 +916,7 @@ body {
   box-shadow: 0 4px 20px rgba(139, 92, 246, 0.25);
 }
 
-.chat-bubble.gemini {
+.chat-bubble.agent {
   align-self: flex-start;
   background: var(--bg-secondary);
   border: 1px solid var(--border-muted);
@@ -953,7 +953,7 @@ body {
   font-size: 0.85rem;
 }
 
-.chat-bubble.gemini .chat-message-text code {
+.chat-bubble.agent .chat-message-text code {
   background: rgba(255, 255, 255, 0.08);
 }
 
@@ -1029,7 +1029,7 @@ body {
   text-decoration: underline;
 }
 
-.chat-bubble.gemini a {
+.chat-bubble.agent a {
   color: var(--color-purple);
   text-decoration: underline;
 }

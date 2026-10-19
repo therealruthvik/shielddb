@@ -1,0 +1,15 @@
+# Render Blueprint: slim backend without torch. Safety screening runs on Groq hosted
+# inference (GROQ_API_KEY), falling back to the keyword engine if Groq is unavailable.
+services:
+  - type: web
+    name: shielddb-api
+    runtime: python
+    plan: free
+    buildCommand: pip install .
+    startCommand: python -m duogaurd_mcp.main dashboard
+    healthCheckPath: /api/categories
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.11"
+      - key: GROQ_API_KEY
+        sync: false

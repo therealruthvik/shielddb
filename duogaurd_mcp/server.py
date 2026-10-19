@@ -5,7 +5,7 @@ import os
 from typing import Dict, Any, List, Optional
 from fastmcp import FastMCP
 
-from duogaurd_mcp.moderator import DuoGuardModerator
+from duogaurd_mcp.moderator import DuoGuardModerator, CATEGORY_NAMES
 from duogaurd_mcp.database import ShieldDBConnection
 
 # Set up logging to stderr so it doesn't corrupt stdout for MCP JSON-RPC
@@ -60,8 +60,8 @@ def db_status() -> Dict[str, Any]:
             "safety_shield": {
                 "active": True,
                 "model": moderator.model_name,
-                "model_status": "Ready (Local GPU-Accelerated)" if moderator.is_ready else "Running on Fallback Engine (Model Loading/Downloading)",
-                "active_guardrails": len(moderator.evaluate_text("test")["probabilities"]),
+                "model_status": "Ready (Local GPU-Accelerated)" if moderator.is_ready else f"Running on {moderator.active_engine}",
+                "active_guardrails": len(CATEGORY_NAMES),
                 "total_moderation_requests": moderator.stats["total_requests"],
                 "blocked_attacks": moderator.stats["blocked_requests"]
             }
