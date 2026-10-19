@@ -158,6 +158,9 @@ export default function App() {
   const [isPolling, setIsPolling] = useState<boolean>(true);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const [copiedSection, setCopiedSection] = useState<string>('');
+  // Backend cold-start banner: the free Render backend sleeps when idle and takes ~30-50s to wake
+  const [backendStatus, setBackendStatus] = useState<'waking' | 'ready' | 'hidden'>('waking');
+  const [wakeSeconds, setWakeSeconds] = useState<number>(0);
   const [categoriesMetadata, setCategoriesMetadata] = useState<Record<string, { description: string, threat_level: string, action: string }>>(CATEGORY_METADATA);
 
   // Load dynamic rules and playbooks from ShieldDB MongoDB on mount
@@ -188,6 +191,7 @@ export default function App() {
       if (res.ok) {
         const data = await res.json();
         setStats(data);
+        setBackendStatus(prev => prev === 'waking' ? 'ready' : prev);
       }
     } catch (e) {
       console.warn("Failed to fetch API stats. Make sure FastAPI server is running on port 8000.", e);
@@ -204,6 +208,17 @@ export default function App() {
     }
     return () => clearInterval(interval);
   }, [isPolling]);
+
+  useEffect(() => {
+    if (backendStatus === 'waking') {
+      const timer = setInterval(() => setWakeSeconds(s => s + 1), 1000);
+      return () => clearInterval(timer);
+    }
+    if (backendStatus === 'ready') {
+      const timer = setTimeout(() => setBackendStatus('hidden'), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [backendStatus]);
 
   // Scroll terminal to bottom
   useEffect(() => {
@@ -502,9 +517,11 @@ export default function App() {
     return '#f59e0b';
   };
 
-  const activeEngineName = stats?.telemetry.active_engine === "DuoGuard-0.5B" 
-    ? "DuoGuard-0.5B (Active)" 
-    : "Rule Fallback Engine (Loading...)";
+  const activeEngineName = !stats
+    ? "Connecting..."
+    : stats.telemetry.active_engine === "DuoGuard-0.5B"
+      ? "DuoGuard-0.5B (Active)"
+      : stats.telemetry.active_engine;
 
   return (
     <div className={`dashboard-container ${triggerFlash ? 'security-alert-overlay' : ''}`}>
@@ -551,7 +568,7 @@ export default function App() {
           <div className="engine-status-card">
             <div className="status-row">
               <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>Shield Status</span>
-              <span className={`dot ${stats?.telemetry.engine_ready ? 'green' : 'red'}`}></span>
+              <span className={`dot ${stats && stats.telemetry.active_engine !== 'Fallback Keyword Matcher' ? 'green' : 'red'}`}></span>
             </div>
             <div style={{ color: 'var(--text-secondary)' }}>
               {activeEngineName}
@@ -599,6 +616,26 @@ export default function App() {
 
       {/* 2. Main Workstation Area */}
       <main className="main-content">
+        {backendStatus !== 'hidden' && (
+          <div className={`backend-banner ${backendStatus}`} role="status" aria-live="polite">
+            {backendStatus === 'waking' ? (
+              <>
+                <RefreshCw size={16} className="backend-banner-spinner" />
+                <span>
+                  <strong>Backend is getting ready...</strong>{' '}
+                  {wakeSeconds < 90
+                    ? `The free server sleeps when idle and takes about 30-50 seconds to wake up (${wakeSeconds}s).`
+                    : `Taking longer than usual (${wakeSeconds}s). Still trying...`}
+                </span>
+              </>
+            ) : (
+              <>
+                <Check size={16} />
+                <span><strong>Backend is ready!</strong> All systems are live.</span>
+              </>
+            )}
+          </div>
+        )}
         <header className="header-section">
           <div>
             <h1 className="header-title">

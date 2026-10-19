@@ -1046,3 +1046,46 @@ body {
 }
 
 
+
+/* Backend cold-start banner */
+.backend-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  animation: slide-in var(--transition-normal);
+  /* Stay visible even when the page auto-scrolls to the terminal on load */
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  box-shadow: var(--glass-shadow);
+}
+
+.backend-banner.waking {
+  background: linear-gradient(var(--color-amber-glow), var(--color-amber-glow)), var(--bg-secondary);
+  border: 1px solid var(--color-amber);
+}
+
+.backend-banner.waking svg {
+  color: var(--color-amber);
+}
+
+.backend-banner.ready {
+  background: linear-gradient(var(--color-green-glow), var(--color-green-glow)), var(--bg-secondary);
+  border: 1px solid var(--color-green);
+}
+
+.backend-banner.ready svg {
+  color: var(--color-green);
+}
+
+.backend-banner svg {
+  flex-shrink: 0;
+}
+
+.backend-banner-spinner {
+  animation: spin 1s linear infinite;
+}
